@@ -34,5 +34,127 @@
 
 <section class="table-card"><div class="table-title"><div><div class="eyebrow">TODAY</div><h2>Attendance records</h2></div><span class="record-count">{{ records|length }} record{{ records|length|pluralize }}</span></div>{% if records %}<div class="table-wrap"><table><thead><tr><th>Student</th><th>ID</th><th>Time</th><th>Confidence</th><th>Status</th></tr></thead><tbody>{% for r in records %}<tr><td><strong>{{ r.student.name }}</strong></td><td>{{ r.student.student_id }}</td><td>{{ r.time|time:"H:i:s" }}</td><td>{{ r.confidence|floatformat:1 }}%</td><td><span class="pill">{{ r.status }}</span></td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty"><div class="empty-icon">◷</div><h3>No attendance recorded today</h3><p>Start the camera and use the daily attendance action after a face profile is ready.</p></div>{% endif %}</section>
 
-<script>(function(){const video=document.getElementById('attendanceVideo'),start=document.getElementById('startAttendanceCamera'),save=document.getElementById('saveProfile'),mark=document.getElementById('markAttendance'),status=document.getElementById('attendanceStatus'),placeholder=document.getElementById('attendancePlaceholder'),profileStudent=document.getElementById('profileStudent'),profileData=document.getElementById('profileImageData'),attendanceData=document.getElementById('attendanceImageData'),profileForm=document.getElementById('profileForm'),attendanceForm=document.getElementById('attendanceForm');let stream=null;const canvas=document.createElement('canvas');function refresh(){const ready=!!stream;save.disabled=!ready||!profileStudent.value;mark.disabled=!ready;}async function openCamera(){try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});video.srcObject=stream;placeholder.style.display='none';status.textContent='Camera is on — center one face in the frame';start.textContent='Camera active';refresh();}catch(e){status.textContent='Camera access was blocked. Allow camera permission in your browser.';}}function capture(){canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',0.92);}start.addEventListener('click',openCamera);profileStudent.addEventListener('change',refresh);save.addEventListener('click',()=>{if(!stream||!profileStudent.value)return;status.textContent='Saving live face profile...';profileData.value=capture();profileForm.submit();});mark.addEventListener('click',()=>{if(!stream)return;status.textContent='Taking live attendance check...';attendanceData.value=capture();attendanceForm.submit();});window.addEventListener('beforeunload',()=>stream&&stream.getTracks().forEach(t=>t.stop()));})();</script>
+<script>
+(function () {
+    const video = document.getElementById("attendanceVideo");
+    const start = document.getElementById("startAttendanceCamera");
+    const save = document.getElementById("saveProfile");
+    const mark = document.getElementById("markAttendance");
+
+    const status = document.getElementById("attendanceStatus");
+    const placeholder = document.getElementById("attendancePlaceholder");
+
+    const profileStudent = document.getElementById("profileStudent");
+    const profileData = document.getElementById("profileImageData");
+    const attendanceData = document.getElementById("attendanceImageData");
+
+    const profileForm = document.getElementById("profileForm");
+    const attendanceForm = document.getElementById("attendanceForm");
+
+    let stream = null;
+    const canvas = document.createElement("canvas");
+
+    function refreshButtons() {
+        const cameraReady = !!stream;
+
+        save.disabled = !cameraReady || !profileStudent.value;
+        mark.disabled = !cameraReady;
+    }
+
+    async function openCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: "user",
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                },
+                audio: false
+            });
+
+            video.srcObject = stream;
+            placeholder.style.display = "none";
+
+            status.textContent =
+                "Camera is on — center one face in the frame";
+
+            start.textContent = "Camera active";
+
+            refreshButtons();
+
+        } catch (error) {
+            status.textContent =
+                "Camera access was blocked. Allow camera permission in your browser.";
+        }
+    }
+
+    function captureImage() {
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+
+        const context = canvas.getContext("2d");
+
+        context.drawImage(
+            video,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        return canvas.toDataURL("image/jpeg", 0.92);
+    }
+
+    start.addEventListener("click", openCamera);
+
+    profileStudent.addEventListener("change", refreshButtons);
+
+    // SAVE FACE PROFILE
+    save.addEventListener("click", function () {
+
+        if (!stream || !profileStudent.value) {
+            return;
+        }
+
+        status.textContent = "Saving live face profile...";
+
+        profileData.value = captureImage();
+
+        profileForm.querySelector(
+            'input[name="action"]'
+        ).value = "enroll";
+
+        profileForm.submit();
+    });
+
+    // MARK ATTENDANCE
+    mark.addEventListener("click", function () {
+
+        if (!stream) {
+            return;
+        }
+
+        status.textContent = "Taking live attendance check...";
+
+        attendanceData.value = captureImage();
+
+        attendanceForm.querySelector(
+            'input[name="action"]'
+        ).value = "mark";
+
+        attendanceForm.submit();
+    });
+
+    window.addEventListener("beforeunload", function () {
+
+        if (stream) {
+            stream.getTracks().forEach(function (track) {
+                track.stop();
+            });
+        }
+
+    });
+
+})();
+</script>
 {% endblock %}
