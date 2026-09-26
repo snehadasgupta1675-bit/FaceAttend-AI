@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Register Student | FaceAttend AI{% endblock %}
+{% block content %}
+<section class="page-head"><div><div class="eyebrow">STUDENT REGISTRATION</div><h1>Create a student record</h1><p>Enter the student's basic information here. There is intentionally no camera on this page.</p></div></section>
+<section class="register-grid single-register">
+  <div class="form-card">
+    <div class="card-label">BASIC INFORMATION</div><h2>Student details</h2>
+    <div class="form-note"><span>◉</span><div><b>Face capture happens in Attendance</b><small>After saving this record, open the Attendance page to create the live face profile. This keeps camera work in one dedicated place.</small></div></div>
+    {% if form.non_field_errors %}<div class="form-error">{{ form.non_field_errors }}</div>{% endif %}
+    <form method="post" id="studentForm">{% csrf_token %}<div class="field-grid">{% for field in form %}<label class="field"><span>{{ field.label }}</span>{{ field }}{% if field.errors %}<small class="field-error">{{ field.errors|striptags }}</small>{% endif %}</label>{% endfor %}</div><button class="btn primary full" type="submit">Save student record →</button></form>
+  </div>
+  <aside class="register-side">
+    <div class="side-visual"><div class="side-ring">◉</div><span>CAMERA LIVES<br>ON ATTENDANCE</span></div>
+    <div class="side-copy"><div class="eyebrow">NEXT STEP</div><h3>Keep registration simple.</h3><p>Once the student is saved, open Attendance. Select the student, start the live camera and save their face profile there.</p></div>
+  </aside>
+</section>
+{% endblock %}

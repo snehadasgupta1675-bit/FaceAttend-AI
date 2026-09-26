@@ -1,0 +1,5 @@
+Django>=5.2,<6.0
+numpy>=2.0
+opencv-python-headless==4.10.0.84
+gunicorn>=23.0
+whitenoise>=6.9

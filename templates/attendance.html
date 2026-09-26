@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Attendance | FaceAttend AI{% endblock %}
+{% block content %}
+<section class="page-head"><div><div class="eyebrow">ATTENDANCE CONTROL CENTER</div><h1>Live camera attendance</h1><p>This is the only page that uses the camera. Create a student's face profile here first, then use the same live camera to recognize attendance.</p></div><div class="date-chip">{{ today|date:"d M Y" }}</div></section>
+
+<section class="attendance-grid">
+  <div class="capture-card camera-card">
+    <div class="camera-topline"><div><div class="card-label">LIVE CAMERA</div><h2>Face capture</h2></div><span class="live-dot">● CAMERA ONLY</span></div>
+    <div class="camera-preview attendance-preview"><video id="attendanceVideo" autoplay playsinline muted></video><div class="camera-placeholder" id="attendancePlaceholder"><div class="placeholder-icon">◉</div><b>Camera is waiting</b><small>Start the live camera below</small></div></div>
+    <div class="camera-status" id="attendanceStatus">Camera is off</div>
+    <button type="button" class="btn secondary full" id="startAttendanceCamera">Start camera</button>
+    <div class="camera-tip">No image upload is used. Your browser camera supplies the face frame.</div>
+  </div>
+
+  <div class="attendance-control-card">
+    <div class="control-block">
+      <div class="card-label">01 · FACE PROFILE</div><h2>Prepare a student's profile</h2>
+      <p>Use this when a registered student does not yet have a face profile.</p>
+      <form method="post" id="profileForm">{% csrf_token %}<input type="hidden" name="action" value="enroll"><input type="hidden" name="face_image_data" id="profileImageData"><label class="field"><span>Select student</span><select name="student_id" id="profileStudent" required><option value="">Choose a student</option>{% for s in students %}<option value="{{ s.id }}">{{ s.name }} — {{ s.student_id }}{% if s.face_encoding %} · profile ready{% endif %}</option>{% endfor %}</select></label><button type="button" class="btn primary full" id="saveProfile" disabled>Capture & save face profile</button></form>
+    </div>
+    <div class="control-divider"></div>
+    <div class="control-block">
+      <div class="card-label">02 · DAILY ATTENDANCE</div><h2>Recognize and mark</h2>
+      <p>When profiles are ready, take a fresh live frame and let FaceAttend AI match it to a registered student.</p>
+      <form method="post" id="attendanceForm">{% csrf_token %}<input type="hidden" name="action" value="mark"><input type="hidden" name="face_image_data" id="attendanceImageData"><button type="button" class="btn dark full" id="markAttendance" disabled>Take face & mark attendance</button></form>
+    </div>
+    {% if profile_result %}<div class="inline-success">✓ Face profile saved for <b>{{ profile_result.student.name }}</b>.</div>{% endif %}
+  </div>
+</section>
+
+<section class="section attendance-guide"><div class="section-heading"><div class="eyebrow">CAMERA WORKFLOW</div><h2>Use one camera, two clear purposes.</h2><p>Profile setup and daily recognition are both handled here so the Students page stays focused on student information.</p></div><div class="guide-grid"><div><b>01</b><h3>Register details</h3><p>Create the student from Students.</p></div><div><b>02</b><h3>Save face profile</h3><p>Select the student here and capture one clear face.</p></div><div><b>03</b><h3>Mark attendance</h3><p>Use a fresh live frame for recognition.</p></div></div></section>
+
+{% if result %}<section class="result-banner {% if result.already %}already{% endif %}"><div class="result-mark">✓</div><div><span>{% if result.already %}ALREADY MARKED TODAY{% else %}ATTENDANCE MARKED{% endif %}</span><h2>{{ result.student.name }}</h2><p>{{ result.student.student_id }}{% if result.student.course %} · {{ result.student.course }}{% endif %} · {{ result.confidence|floatformat:1 }}% match</p></div></section>{% endif %}
+
+<section class="table-card"><div class="table-title"><div><div class="eyebrow">TODAY</div><h2>Attendance records</h2></div><span class="record-count">{{ records|length }} record{{ records|length|pluralize }}</span></div>{% if records %}<div class="table-wrap"><table><thead><tr><th>Student</th><th>ID</th><th>Time</th><th>Confidence</th><th>Status</th></tr></thead><tbody>{% for r in records %}<tr><td><strong>{{ r.student.name }}</strong></td><td>{{ r.student.student_id }}</td><td>{{ r.time|time:"H:i:s" }}</td><td>{{ r.confidence|floatformat:1 }}%</td><td><span class="pill">{{ r.status }}</span></td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty"><div class="empty-icon">◷</div><h3>No attendance recorded today</h3><p>Start the camera and use the daily attendance action after a face profile is ready.</p></div>{% endif %}</section>
+
+<script>(function(){const video=document.getElementById('attendanceVideo'),start=document.getElementById('startAttendanceCamera'),save=document.getElementById('saveProfile'),mark=document.getElementById('markAttendance'),status=document.getElementById('attendanceStatus'),placeholder=document.getElementById('attendancePlaceholder'),profileStudent=document.getElementById('profileStudent'),profileData=document.getElementById('profileImageData'),attendanceData=document.getElementById('attendanceImageData'),profileForm=document.getElementById('profileForm'),attendanceForm=document.getElementById('attendanceForm');let stream=null;const canvas=document.createElement('canvas');function refresh(){const ready=!!stream;save.disabled=!ready||!profileStudent.value;mark.disabled=!ready;}async function openCamera(){try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});video.srcObject=stream;placeholder.style.display='none';status.textContent='Camera is on — center one face in the frame';start.textContent='Camera active';refresh();}catch(e){status.textContent='Camera access was blocked. Allow camera permission in your browser.';}}function capture(){canvas.width=video.videoWidth||640;canvas.height=video.videoHeight||480;canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',0.92);}start.addEventListener('click',openCamera);profileStudent.addEventListener('change',refresh);save.addEventListener('click',()=>{if(!stream||!profileStudent.value)return;status.textContent='Saving live face profile...';profileData.value=capture();profileForm.submit();});mark.addEventListener('click',()=>{if(!stream)return;status.textContent='Taking live attendance check...';attendanceData.value=capture();attendanceForm.submit();});window.addEventListener('beforeunload',()=>stream&&stream.getTracks().forEach(t=>t.stop()));})();</script>
+{% endblock %}
