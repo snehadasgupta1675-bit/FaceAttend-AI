@@ -22,7 +22,14 @@
     <div class="control-block">
       <div class="card-label">02 · DAILY ATTENDANCE</div><h2>Recognize and mark</h2>
       <p>When profiles are ready, take a fresh live frame and let FaceAttend AI match it to a registered student.</p>
-      <form method="post" id="attendanceForm">{% csrf_token %}<input type="hidden" name="action" value="mark"><input type="hidden" name="face_image_data" id="attendanceImageData"><button type="button" class="btn dark full" id="markAttendance" disabled>Take face & mark attendance</button></form>
+      <form method="post" id="attendanceForm">
+    {% csrf_token %}
+    <input type="hidden" name="face_image_data" id="attendanceImageData">
+
+    <button type="button" class="btn dark full" id="markAttendance" disabled>
+        Take face & mark attendance
+    </button>
+</form>
     </div>
     {% if profile_result %}<div class="inline-success">✓ Face profile saved for <b>{{ profile_result.student.name }}</b>.</div>{% endif %}
   </div>
@@ -128,22 +135,25 @@
     });
 
     // MARK ATTENDANCE
-    mark.addEventListener("click", function () {
+mark.addEventListener("click", function () {
 
-        if (!stream) {
-            return;
-        }
+    if (!stream) {
+        return;
+    }
 
-        status.textContent = "Taking live attendance check...";
+    status.textContent = "Taking live attendance check...";
 
-        attendanceData.value = captureImage();
+    attendanceData.value = captureImage();
 
-        attendanceForm.querySelector(
-            'input[name="action"]'
-        ).value = "mark";
+    const actionInput = document.createElement("input");
+    actionInput.type = "hidden";
+    actionInput.name = "action";
+    actionInput.value = "mark";
 
-        attendanceForm.submit();
-    });
+    attendanceForm.appendChild(actionInput);
+
+    attendanceForm.submit();
+});
 
     window.addEventListener("beforeunload", function () {
 
